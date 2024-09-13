@@ -1,11 +1,11 @@
 /// <reference types="@workadventure/iframe-api-typings" />
 
 import { bootstrapExtra } from "@workadventure/scripting-api-extra";
+import { Subscription } from "rxjs";
 
 console.log('Script started successfully');
 
 let currentPopup: any = undefined;
-let originalMoveFunction: any = undefined;
 
 // Waiting for the API to be ready
 WA.onInit().then(() => {
@@ -47,7 +47,7 @@ WA.onInit()
   .then(() => {
     const startIceSkating = () => {
       let isMoving = false;
-      return WA.player.onPlayerMove(async ({ x, y, moving }) => {
+      return WA.player.onPlayerMove(async ({ moving }) => {
         if (!moving || isMoving) return;
         isMoving = true;
         WA.controls.disablePlayerControls();
@@ -64,7 +64,7 @@ WA.onInit()
 
         console.log(`Moving to random position: x=${randomX}, y=${randomY}`);
         
-        WA.player.moveTo(randomX, randomY, 30).then(({ cancelled }) => {
+        WA.player.moveTo(randomX, randomY, 30).then(({ }) => {
           WA.controls.restorePlayerControls();
           isMoving = false;
         });
