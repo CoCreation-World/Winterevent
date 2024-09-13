@@ -6,7 +6,6 @@ import { Subscription } from "rxjs";
 console.log("Script started successfully");
 
 let currentPopup: any = undefined;
-let originalMoveFunction: any = undefined;
 
 // Waiting for the API to be ready
 WA.onInit()
@@ -52,23 +51,27 @@ function closePopup() {
 }
 WA.onInit()
   .then(() => {
+    WA.room.getTiledMap().then(console.log);
     const startIceSkating = () => {
       let isMoving = false;
-      return WA.player.onPlayerMove(async ({ x, y, moving }) => {
+      return WA.player.onPlayerMove(async ({ moving }) => {
         if (!moving || isMoving) return;
         isMoving = true;
         WA.controls.disablePlayerControls();
-        const randomX = Math.floor(Math.random() * 10) - 1; // -1, 0, or 1
-        const randomY = Math.floor(Math.random() * 10) - 1; // -1, 0, or 1
-        console.log(randomX, randomY);
-        const newX = Math.round(x) + randomX;
-        const newY = Math.round(y) + randomY;
-        console.log({ x, y }, "Moving to:", newX, newY);
-        // WA.player.teleport(newX, newY).then(() => {
-        //   WA.controls.restorePlayerControls();
-        //   isMoving = false;
-        // });
-        WA.player.moveTo(newX, newY, 20).then(({ cancelled }) => {
+
+        // Define the ice area coordinate ranges
+        const minX = 1200;
+        const maxX = 1800;
+        const minY = 800;
+        const maxY = 1200;
+
+        // Generate random coordinates within the ice area
+        const randomX = Math.random() * (maxX - minX) + minX;
+        const randomY = Math.random() * (maxY - minY) + minY;
+
+        console.log(`Moving to random position: x=${randomX}, y=${randomY}`);
+
+        WA.player.moveTo(randomX, randomY, 30).then(({}) => {
           WA.controls.restorePlayerControls();
           isMoving = false;
         });
