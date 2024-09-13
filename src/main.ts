@@ -43,40 +43,46 @@ function closePopup() {
         currentPopup = undefined;
     }
 }
-WA.onInit().then(() => {
-    async function startIceSkating() {
-        originalMoveFunction = WA.player.moveTo;
-        WA.player.moveTo = async (): Promise<{ x: number; y: number; cancelled: boolean }> => {
-            const position = await WA.player.getPosition();
-            const randomX = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
-            const randomY = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
-            const newX = position.x + randomX;
-            const newY = position.y + randomY;
-            console.log('Moving to:', newX, newY);
-            try {
-                await originalMoveFunction(newX, newY, 10);
-                console.log('Move successful');
-                return { x: newX, y: newY, cancelled: false };
-            } catch (error) {
-                console.log('Move failed:', error);
-                return { x: position.x, y: position.y, cancelled: true };
-            }
-        };
-    }
+WA.onInit()
+  .then(() => {
+    const startIceSkating = () => {
+      let isMoving = false;
+      return WA.player.onPlayerMove(async ({ x, y, moving }) => {
+        if (!moving || isMoving) return;
+        isMoving = true;
+        WA.controls.disablePlayerControls();
+        
+        // Define the ice area coordinate ranges
+        const minX = 1200;
+        const maxX = 1800;
+        const minY = 800;
+        const maxY = 1200;
 
-    function stopIceSkating() {
-        if (originalMoveFunction) {
-            WA.player.moveTo = originalMoveFunction;
-            originalMoveFunction = undefined;
-        }
-    }
+        // Generate random coordinates within the ice area
+        const randomX = Math.random() * (maxX - minX) + minX;
+        const randomY = Math.random() * (maxY - minY) + minY;
 
-    WA.room.area.onEnter('ice').subscribe(() => {
-        startIceSkating();
+        console.log(`Moving to random position: x=${randomX}, y=${randomY}`);
+        
+        WA.player.moveTo(randomX, randomY, 30).then(({ cancelled }) => {
+          WA.controls.restorePlayerControls();
+          isMoving = false;
+        });
+      });
+    };
+
+
+    let skatingSub: Subscription;
+
+    WA.room.area.onEnter("ice").subscribe(() => {
+      console.log("enter");
+      skatingSub = startIceSkating();
     });
-    WA.room.area.onLeave('ice').subscribe(() => {
-        stopIceSkating();
-    });
-}).catch(e => console.error(e));
 
+    WA.room.area.onLeave("ice").subscribe(() => {
+      console.log("leave");
+      skatingSub.unsubscribe();
+    });
+  })
+  .catch((e) => console.error(e));
 export {};
