@@ -51,30 +51,34 @@ function closePopup() {
 }
 WA.onInit()
   .then(() => {
-    WA.room.getTiledMap().then(console.log);
     const startIceSkating = () => {
       let isMoving = false;
-      return WA.player.onPlayerMove(async ({ moving }) => {
+      return WA.player.onPlayerMove(async ({ x, y, moving }) => {
         if (!moving || isMoving) return;
         isMoving = true;
         WA.controls.disablePlayerControls();
 
-        // Define the ice area coordinate ranges
-        const minX = 1200;
-        const maxX = 1800;
-        const minY = 800;
-        const maxY = 1200;
+        const TILE_SIZE = 32;
+        const MOVEMENT_RANGE = TILE_SIZE * 3;
 
-        // Generate random coordinates within the ice area
+        // Define the coordinate boundaries
+        const minX = x - MOVEMENT_RANGE; // Minimum X position
+        const maxX = x + MOVEMENT_RANGE; // Maximum X position
+        const minY = y - MOVEMENT_RANGE; // Minimum Y position
+        const maxY = y + MOVEMENT_RANGE; // Maximum Y position
+
         const randomX = Math.random() * (maxX - minX) + minX;
         const randomY = Math.random() * (maxY - minY) + minY;
+        console.log(randomX, randomY);
 
-        console.log(`Moving to random position: x=${randomX}, y=${randomY}`);
+        console.log({ x, y }, "Moving to:", randomX, randomY);
 
-        WA.player.moveTo(randomX, randomY, 30).then(({}) => {
-          WA.controls.restorePlayerControls();
-          isMoving = false;
-        });
+        WA.player
+          .moveTo(Math.round(randomX), Math.round(randomY), 20)
+          .then(({ cancelled }) => {
+            WA.controls.restorePlayerControls();
+            isMoving = false;
+          });
       });
     };
 
